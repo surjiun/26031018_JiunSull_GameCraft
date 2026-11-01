@@ -1,48 +1,73 @@
-﻿// -------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Author: 3dapi (https://github.com/3dapi)
-// -------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 using Vortice.Mathematics;
 
 class GameMain : G2AppBase
 {
-	public override System.Drawing.Size ScreenSize => GameGlobal.ScreenSize;
-	public override string GameName => GameGlobal.GameName;
+    private enum Scene
+    {
+        MainMenu,
+        Play
+    }
 
-	protected override void Initialize()
-	{
-		//---------------------------------------
-		// 게임 관련 객체를 생성합니다.
-		//---------------------------------------
-	}
+    private G2Audio _backgroundMusic;
+    private MainMenu _mainMenu;
+    private PlayScene _playScene;
+    private Scene _scene = Scene.MainMenu;
 
-	protected override void Update()
-	{
-		double elapsed = TotalTime;
+    public override System.Drawing.Size ScreenSize => GameGlobal.ScreenSize;
+    public override string GameName => GameGlobal.GameName;
 
-		this.ClearColor = new Color4(
-			red: (float)(Math.Sin(elapsed) * 0.5 + 0.5),
-			green: (float)(Math.Sin(elapsed + Math.PI / 2.0) * 0.5 + 0.5),
-			blue: (float)(Math.Sin(elapsed + Math.PI) * 0.5 + 0.5),
-			alpha: 1.0f);
+    public GameMain()
+    {
+        string bgmDir = "resource/audio/bgm/";
+        _backgroundMusic = new G2Audio(bgmDir + "background.wav");
+        _mainMenu = new MainMenu();
+        _playScene = new PlayScene();
+    }
 
-		//---------------------------------------
-		// 게임 관련 객체를 갱신합니다.
-		//---------------------------------------
-	}
+    protected override void Initialize()
+    {
+        ClearColor = new Color4(0.06f, 0.08f, 0.11f, 1.0f);
+        _backgroundMusic.Play(true);
+    }
 
-	protected override void Render()
-	{
-		//---------------------------------------
-		// 게임 관련 객체를 렌더링 합니다.
-		//---------------------------------------
-	}
+    protected override void Update()
+    {
+        if (_scene == Scene.MainMenu)
+        {
+            int clickedButton = _mainMenu.Update(Input);
+            if (clickedButton == 0)
+            {
+                _scene = Scene.Play;
+            }
+            else if (clickedButton == 1)
+            {
+                Close();
+            }
+        }
+        else if (_scene == Scene.Play)
+        {
+            _playScene.Update(Input, (float)DeltaTime);
+        }
+    }
 
-	public override void Dispose()
-	{
-		base.Dispose();
-		//---------------------------------------
-		// 게임 관련 객체를 해제합니다.
-		//---------------------------------------
-	}
+    protected override void Render()
+    {
+        if (_scene == Scene.MainMenu)
+        {
+            _mainMenu.Render(Input);
+        }
+        else if (_scene == Scene.Play)
+        {
+            _playScene.Render(RenderTarget);
+        }
+    }
+
+    public override void Dispose()
+    {
+        _backgroundMusic.Stop();
+        _backgroundMusic.Dispose();
+        _playScene.Dispose();
+        _mainMenu.Dispose();
+        base.Dispose();
+    }
 }
